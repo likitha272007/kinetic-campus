@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>The Pulse of Your Campus | Kinetic Campus</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;600;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card {
+            background: rgba(25, 37, 64, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(133, 173, 255, 0.1);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(133, 173, 255, 0.1) 0%, transparent 70%);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(133, 173, 255, 0.2); border-radius: 10px; }
+        .trend-card:hover {
+            border-color: rgba(133, 173, 255, 0.4);
+            box-shadow: 0 0 40px rgba(133, 173, 255, 0.08);
+        }
+        @keyframes todayPulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.6; }
+        }
+        .today-badge { animation: todayPulse 2s ease-in-out infinite; }
+    </style>
+</head>
+<body class="bg-[#060e20] text-[#dee5ff] selection:bg-[#85adff] selection:text-[#002c66]">
+
+    <!-- NAV -->
+    <nav class="sticky top-0 z-50 w-full border-b border-white/5 bg-[#060e20]/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-12">
+                <span class="text-xl font-black tracking-tighter text-[#85adff]">Kinetic Campus</span>
+                <div class="hidden md:flex gap-8 text-sm font-bold uppercase tracking-widest text-[#a3aac4]">
+                    <a href="/explore" class="hover:text-white transition-colors">Explore</a>
+                    <a href="/my-events" class="hover:text-white transition-colors">My Events</a>
+                    {% if role == 'admin' %}
+                        <a href="/create-event" class="text-[#85adff] border-b border-[#85adff] pb-1 hover:text-white transition-all">Create Events</a>
+                        <a href="/admin" class="hover:text-white transition-colors">Dashboard</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div class="relative inline-block">
+                    <button id="notificationBtn"
+                            class="material-symbols-outlined text-[#a3aac4] relative hover:text-white transition-colors focus:outline-none">
+                        notifications
+                        <span id="notificationCount"
+                              class="hidden absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-black rounded-full border-2 border-[#060e20]">
+                            0
+                        </span>
+                    </button>
+                    <div id="notifDropdown"
+                         class="hidden absolute right-0 mt-4 w-80 glass-card rounded-2xl shadow-2xl z-[100] overflow-hidden border border-white/10">
+                        <div class="p-4 border-b border-white/5 bg-white/5">
+                            <h4 class="text-xs font-black uppercase tracking-widest text-[#85adff]">Recent Pulses</h4>
+                        </div>
+                        <div id="notifList" class="max-h-96 overflow-y-auto custom-scrollbar">
+                            <div class="p-8 text-center text-[#a3aac4] text-xs italic">Checking for updates...</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if is_logged_in %}
+                    <div class="flex items-center gap-4">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-[#85adff]">Hi, {{ user_name }}</span>
+                        <a href="/logout" class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition-all">Logout</a>
+                    </div>
+                {% else %}
+                    <a href="/register?mode=login" class="px-6 py-2.5 rounded-xl bg-[#85adff] text-[#002c66] font-bold text-sm hover:scale-105 transition-all">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="relative pt-20 pb-32 px-6 hero-gradient overflow-hidden">
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+            <div class="relative z-10">
+                <span class="inline-block px-4 py-1.5 rounded-full bg-[#85adff]/10 text-[#85adff] text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+                    ⚡ New on Campus Life
+                </span>
+                <h1 class="text-6xl md:text-7xl font-extrabold tracking-tighter leading-none mb-8">
+                    The Pulse of <br/>
+                    <span class="text-[#85adff] italic">Your Campus</span>
+                </h1>
+                <p class="text-lg md:text-xl text-[#a3aac4] leading-relaxed max-w-xl mb-10">
+                    Experience university life reimagined. Exclusive high-energy events, vibrant clubs, and a community that never sleeps.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    {% if role == 'admin' %}
+                        <a href="/create-event"
+                           class="px-8 py-4 rounded-xl bg-[#85adff] text-[#002c66] font-black text-base shadow-[0_20px_40px_rgba(133,173,255,0.3)]">
+                            Broadcast Event
+                        </a>
+                    {% else %}
+                        <a href="/explore"
+                           class="px-8 py-4 rounded-xl bg-[#85adff] text-[#002c66] font-black text-base shadow-[0_20px_40px_rgba(133,173,255,0.3)]">
+                            Explore Pulse UI
+                        </a>
+                    {% endif %}
+                    <button class="px-8 py-4 rounded-xl bg-white/5 border border-white/10 font-bold hover:bg-white/10 transition-all">
+                        How it Works
+                    </button>
+                </div>
+                <div class="mt-10">
+                    <span class="text-sm text-[#a3aac4]">Joined by <span class="text-[#85adff] font-black">1,400+ students</span> this semester</span>
+                </div>
+            </div>
+
+            <a href="/explore" class="relative group cursor-pointer block">
+                <div class="absolute inset-0 bg-[#85adff]/20 blur-[100px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="aspect-square glass-card rounded-[40px] p-8 relative overflow-hidden flex flex-col justify-end hover:border-[#85adff]/40 transition-all">
+                    <div class="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white">arrow_forward</span>
+                    </div>
+                    <img src="https://d1csarkz8obe9u.cloudfront.net/posterpreviews/world-creativity-and-innovation-day-design-template-96a17fa5a544dd4771ab792c1c968c90_screen.jpg?ts=1732802429"
+                         alt="Pulse"
+                         class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+                    <div class="bg-[#091328]/80 backdrop-blur-md p-6 rounded-2xl border border-white/10 relative z-10">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-[#a3aac4] mb-2">Happening Now</p>
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-bold group-hover:text-[#85adff] transition-colors">World Innovation Day 2026</h3>
+                            <span class="px-3 py-1 bg-red-500/20 text-red-500 text-[10px] font-bold rounded-full animate-pulse">LIVE</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- TRENDING EVENTS -->
+    {% if trending %}
+    <section class="py-24 px-6 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                <div>
+                    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-[#85adff] mb-4 inline-block">
+                        ⚡ Happening Soon
+                    </span>
+                    <h2 class="text-4xl md:text-5xl font-black tracking-tighter">
+                        Trending <span class="italic text-[#85adff]">Pulse</span>
+                    </h2>
+                    <p class="text-[#a3aac4] text-sm mt-2">The next events on your campus radar — don't miss out.</p>
+                </div>
+                <a href="/explore" class="text-sm font-bold text-[#85adff] flex items-center gap-2 group whitespace-nowrap">
+                    Explore all events
+                    <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                </a>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+            {% for ev in trending %}
+                {% set days_away = ev.days_away %}
+                {% set is_today  = (days_away == 0) %}
+                <div class="trend-card glass-card rounded-[32px] overflow-hidden flex flex-col transition-all duration-300
+                            {{ 'border-[#85adff]/40 shadow-[0_0_30px_rgba(133,173,255,0.12)]' if is_today else '' }}">
+
+                    <!-- Banner -->
+                    <div class="h-48 relative overflow-hidden bg-[#0f1930]">
+                        {% if ev.banner_image %}
+                            <img src="/uploads/{{ ev.banner_image }}"
+                                 alt="{{ ev.title }}"
+                                 class="w-full h-full object-cover transition-transform duration-700"/>
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center"
+                                 style="background: linear-gradient(135deg, rgba(133,173,255,0.15) 0%, rgba(251,171,255,0.08) 100%);">
+                                <span class="material-symbols-outlined text-6xl text-[#85adff]/20">event</span>
+                            </div>
+                        {% endif %}
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#060e20]/70 to-transparent"></div>
+
+                        <!-- Today / Upcoming badge -->
+                        <div class="absolute top-4 left-4">
+                            {% if is_today %}
+                                <span class="today-badge px-3 py-1 bg-red-500 text-white text-[10px] font-black uppercase rounded-lg tracking-widest">🔴 Today</span>
+                            {% elif days_away == 1 %}
+                                <span class="px-3 py-1 bg-yellow-500/90 text-[#060e20] text-[10px] font-black uppercase rounded-lg tracking-widest">Tomorrow</span>
+                            {% else %}
+                                <span class="px-3 py-1 bg-[#85adff]/20 text-[#85adff] text-[10px] font-black uppercase rounded-lg tracking-widest">In {{ days_away }} days</span>
+                            {% endif %}
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <span class="px-2 py-1 bg-white/10 backdrop-blur text-[#dee5ff] text-[9px] font-black uppercase rounded-lg tracking-widest">Sem {{ ev.semester }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Card body -->
+                    <div class="p-8 flex flex-col flex-1">
+                        <div class="flex-1">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-[#85adff] mb-2">{{ ev.event_date }}</p>
+                            <h3 class="text-xl font-extrabold text-white mb-3 leading-snug">{{ ev.title }}</h3>
+                            {% if ev.purpose %}
+                                <p class="text-sm text-[#a3aac4] leading-relaxed mb-4"
+                                   style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                                    {{ ev.purpose }}
+                                </p>
+                            {% endif %}
+                            <div class="flex items-center gap-2 text-[#fbabff] mb-4">
+                                <span class="material-symbols-outlined text-sm">location_on</span>
+                                <span class="text-[10px] font-bold uppercase tracking-tighter">{{ ev.location or 'TBA' }}</span>
+                            </div>
+                            {% if ev.capacity and ev.capacity > 0 %}
+                                <div class="flex items-center gap-2 text-[#a3aac4]">
+                                    <span class="material-symbols-outlined text-sm">group</span>
+                                    <span class="text-[10px] font-bold">Capacity: {{ ev.capacity }} seats</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- RSVP button -->
+                        <div class="mt-8 pt-6 border-t border-white/5">
+                            <a href="/event-details?id={{ ev.id }}"
+                               class="w-full flex items-center justify-center gap-2 py-3 rounded-xl
+                                      {{ 'bg-[#85adff] text-[#002c66] font-black shadow-[0_8px_24px_rgba(133,173,255,0.3)] hover:scale-[1.02]' if is_today else 'bg-white/5 border border-white/10 text-[#85adff] font-bold hover:bg-[#85adff] hover:text-[#002c66]' }}
+                                      text-xs uppercase tracking-widest transition-all">
+                                <span class="material-symbols-outlined text-sm">{{ 'bolt' if is_today else 'arrow_forward' }}</span>
+                                {{ 'Join Now' if is_today else 'RSVP' }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- FEATURES -->
+    <section class="py-32 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="mb-20">
+                <h2 class="text-4xl font-extrabold tracking-tight mb-4">Redefining Engagement</h2>
+                <p class="text-[#a3aac4] font-medium tracking-wide">Powerful tools designed for the modern academic lifestyle.</p>
+            </div>
+            <div class="grid md:grid-cols-12 gap-6">
+
+                <!-- 1. Personalized Feed -->
+                <a href="/explore" class="md:col-span-8 glass-card p-10 rounded-3xl min-h-[320px] flex flex-col justify-between group cursor-pointer hover:border-[#85adff]/50 hover:shadow-[0_0_30px_rgba(133,173,255,0.15)] transition-all">
+                    <div class="flex items-center justify-between">
+                        <span class="material-symbols-outlined text-3xl text-[#85adff]">bolt</span>
+                        <span class="text-xs font-bold text-[#85adff] flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                            Explore AI Feed ➔
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-extrabold mb-3 text-white group-hover:text-[#85adff] transition-colors">Personalized Feed</h3>
+                        <p class="text-[#a3aac4] mb-6 max-w-md">An AI-driven environment tailored to your interests, majors, and local campus hotspots.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold uppercase text-[#85adff] border border-white/5">Engineering</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold uppercase text-[#fbabff] border border-white/5">Nightlife</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold uppercase text-[#4ade80] border border-white/5">Workshops</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- 2. Instant RSVP -->
+                <a href="/my-events" class="md:col-span-4 glass-card p-10 rounded-3xl flex flex-col justify-between bg-gradient-to-br from-[#192540] to-[#091328] group cursor-pointer hover:border-[#fbabff]/50 hover:shadow-[0_0_30px_rgba(251,171,255,0.15)] transition-all">
+                    <span class="material-symbols-outlined text-3xl text-[#fbabff]">qr_code_2</span>
+                    <div>
+                        <h3 class="text-2xl font-extrabold mb-3 text-white group-hover:text-[#fbabff] transition-colors">Instant RSVP</h3>
+                        <p class="text-[#a3aac4] text-sm leading-relaxed mb-6">Scan and sync with single tap. Digital tickets maintain your spot.</p>
+                        <span class="text-sm font-bold text-[#85adff] flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                            View My RSVPs ➔
+                        </span>
+                    </div>
+                </a>
+
+                <!-- 3. Club Management -->
+                <a href="/admin" class="md:col-span-4 glass-card p-10 rounded-3xl min-h-[300px] flex flex-col justify-between group cursor-pointer hover:border-cyan-400/50 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)] transition-all">
+                    <span class="material-symbols-outlined text-3xl text-cyan-400">groups</span>
+                    <div>
+                        <h3 class="text-2xl font-extrabold mb-3 text-white group-hover:text-cyan-400 transition-colors">Club Management</h3>
+                        <p class="text-[#a3aac4] text-sm mb-4">Lead your community with centralized dashboards and analytics.</p>
+                        <span class="text-xs font-bold text-cyan-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                            Open Admin Panel ➔
+                        </span>
+                    </div>
+                </a>
+
+                <!-- 4. University Integration -->
+                <a href="/explore" class="md:col-span-8 glass-card p-10 rounded-3xl flex flex-col md:flex-row justify-between items-end md:items-center group cursor-pointer hover:border-[#85adff]/50 hover:shadow-[0_0_30px_rgba(133,173,255,0.15)] transition-all">
+                    <div class="max-w-md">
+                        <h3 class="text-2xl font-extrabold mb-3 text-white group-hover:text-[#85adff] transition-colors">University Integration</h3>
+                        <p class="text-[#a3aac4] text-sm">Synchronized with Canvas, Outlook, and Google Calendar. Never miss a deadline.</p>
+                    </div>
+                    <div class="flex gap-4 mt-6 md:mt-0">
+                        <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#85adff] group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined">sync</span>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#fbabff] group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined">calendar_month</span>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#4ade80] group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined">mail</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 px-6">
+        <div class="max-w-5xl mx-auto bg-gradient-to-br from-[#192540] to-[#060e20] rounded-[40px] p-16 text-center border border-white/5 relative overflow-hidden">
+            <div class="absolute -top-20 -right-20 w-64 h-64 bg-[#85adff]/10 blur-[100px]"></div>
+            <h2 class="text-4xl md:text-5xl font-black tracking-tighter mb-6">Ready to Join the Pulse?</h2>
+            <p class="text-[#a3aac4] mb-12 max-w-xl mx-auto">Sign up on the web to start exploring your campus ecosystem today.</p>
+            <a href="#" onclick="document.getElementById('registerModal').style.display='flex'"
+               class="px-10 py-4 rounded-2xl bg-[#85adff] text-[#002c66] font-black tracking-tight hover:scale-105 transition-all">
+                Find Your Campus
+            </a>
+
+            <!-- Modal -->
+            <div id="registerModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
+                <div style="background:#091328; border-radius:16px; width:90%; max-width:800px; height:80vh; position:relative;">
+                    <button onclick="document.getElementById('registerModal').style.display='none'"
+                            style="position:absolute; top:12px; right:16px; color:white; font-size:24px; background:none; border:none; cursor:pointer;">✕</button>
+                    <iframe src="/register" style="width:100%; height:100%; border:none; border-radius:16px;"></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-20 px-6 border-t border-white/5">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
+            <div class="md:col-span-1">
+                <span class="text-xl font-black tracking-tighter text-[#85adff]">Kinetic Campus</span>
+                <p class="mt-4 text-xs font-bold leading-relaxed text-[#a3aac4] uppercase tracking-widest opacity-60">
+                    The decentralized hub for the next-gen academic lifestyle.
+                </p>
+            </div>
+            <div>
+                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-[#85adff] mb-6">Platform</h4>
+                <ul class="space-y-4 text-sm font-bold text-[#a3aac4]">
+                    <li><a href="/explore" class="hover:text-white transition-colors">Explore Feed</a></li>
+                    <li><a href="/my-events" class="hover:text-white transition-colors">Campus Events</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-[#85adff] mb-6">Legal</h4>
+                <ul class="space-y-4 text-sm font-bold text-[#a3aac4]">
+                    <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto mt-20 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-[#a3aac4] opacity-40">
+            <span>© 2026 Kinetic Campus</span>
+            <div class="flex gap-4">
+                <span>Made in Presidency University</span>
+                <span>EN-INDIA</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script>
+        document.getElementById('notificationBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('notifDropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                document.getElementById('notificationCount').classList.add('hidden');
+                loadNotificationHistory();
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notifDropdown');
+            const btn      = document.getElementById('notificationBtn');
+            if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function checkNotifications() {
+            fetch('/check-notifications?t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    const badge = document.getElementById('notificationCount');
+                    if (data.new_event && data.count > 0) {
+                        badge.innerText = data.count;
+                        badge.classList.remove('hidden');
+                    }
+                })
+                .catch(() => console.warn("Pulse check offline"));
+        }
+
+        function loadNotificationHistory() {
+            const list = document.getElementById('notifList');
+            list.innerHTML = '<div class="p-8 text-center text-[#a3aac4] text-xs italic">Loading pulses...</div>';
+            fetch('/get-previous-events?t=' + Date.now())
+                .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+                .then(events => {
+                    if (!events || events.length === 0) {
+                        list.innerHTML = '<div class="p-6 text-center text-xs text-[#a3aac4]">No pulses found.</div>';
+                        return;
+                    }
+                    list.innerHTML = events.map(function(e) {
+                        const id    = parseInt(e.id, 10);
+                        const title = e.title || 'Untitled Event';
+                        const date  = e.date  || 'Date TBA';
+                        if (!id || id <= 0) return '';
+                        return '<div class="p-4 border-b border-white/5 hover:bg-white/5 transition-colors">'
+                            + '<p class="text-[10px] font-bold text-[#85adff] uppercase mb-1">' + date + '</p>'
+                            + '<h5 class="text-sm font-extrabold mb-3 text-white">' + title + '</h5>'
+                            + '<button onclick="window.location.href=\'/event-details?id=' + id + '\'"'
+                            + ' class="inline-block px-4 py-2 bg-[#85adff] text-[#002c66] text-[10px] font-black uppercase rounded-lg hover:opacity-90 cursor-pointer">'
+                            + 'Join Now</button></div>';
+                    }).join('');
+                })
+                .catch(() => { list.innerHTML = '<div class="p-6 text-center text-xs text-red-400">Failed to load pulses.</div>'; });
+        }
+
+        setInterval(checkNotifications, 3000);
+    </script>
+    <script src="/static/ai_features.js"></script>
+</body>
+</html>

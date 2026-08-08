@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Auth | Kinetic Campus</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-panel { background: rgba(31, 43, 73, 0.6); backdrop-filter: blur(24px); }
+        .bg-kinetic { background-color: #060e20; }
+        .text-primary { color: #85adff; }
+    </style>
+</head>
+<body class="bg-kinetic text-[#dee5ff] min-h-screen flex items-center justify-center p-4">
+
+    <main class="w-full max-w-6xl flex flex-col md:flex-row overflow-hidden rounded-2xl shadow-2xl">
+        <section class="hidden md:flex flex-col justify-between w-1/2 p-12 bg-[#091328] relative">
+            <div class="relative z-10">
+                <div class="text-2xl font-black tracking-tighter text-primary mb-12">Kinetic Campus</div>
+                <h1 class="text-5xl font-extrabold tracking-tight leading-none mb-6">
+                    Join the <span class="text-primary italic">Electric</span> Archive.
+                </h1>
+            </div>
+            <div class="glass-panel p-6 rounded-xl border-l-4 border-primary relative z-10">
+                <p class="text-sm italic opacity-90">"Access the university's most dynamic events ecosystem."</p>
+            </div>
+        </section>
+
+        <section class="w-full md:w-1/2 p-8 md:p-16 bg-[#0f1930]">
+            <div class="max-w-md mx-auto">
+                <h2 id="formTitle" class="text-3xl font-bold mb-8 text-center">Create Account</h2>
+
+                <form id="authForm" action="/register" method="POST" class="space-y-5">
+                    <input type="hidden" name="role" id="roleInput" value="user">
+
+                    <div class="flex gap-4 mb-8">
+                        <button type="button" onclick="setRole('user')" id="btnUser"
+                                class="flex-1 p-4 rounded-xl border-2 border-primary bg-primary/10 transition-all">
+                            <span class="material-symbols-outlined block mb-1">person</span>
+                            <span class="block font-bold text-sm">Student</span>
+                        </button>
+                        <button type="button" onclick="setRole('admin')" id="btnAdmin"
+                                class="flex-1 p-4 rounded-xl border-2 border-transparent bg-[#091328] hover:border-white/10 transition-all">
+                            <span class="material-symbols-outlined block mb-1">shield_person</span>
+                            <span class="block font-bold text-sm">Admin</span>
+                        </button>
+                    </div>
+
+                    <div class="flex justify-center gap-6 mb-8 text-[10px] font-black uppercase tracking-[0.2em]">
+                        <button type="button" onclick="toggleMode('register')" id="modeReg"
+                                class="text-primary border-b-2 border-primary pb-1">Sign Up</button>
+                        <button type="button" onclick="toggleMode('login')" id="modeLogin"
+                                class="text-[#a3aac4] hover:text-white transition-colors">Login</button>
+                    </div>
+
+                    <div id="nameField">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-[#a3aac4] mb-2 ml-1">Full Name</label>
+                        <input name="fullName" type="text" placeholder="Alex Rivera"
+                               class="w-full bg-[#192540] border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-primary"/>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-[#a3aac4] mb-2 ml-1">University Email</label>
+                        <input name="email" type="email" required placeholder="a.rivera@campus.edu"
+                               class="w-full bg-[#192540] border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-primary"/>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-[#a3aac4] mb-2 ml-1">Password</label>
+                        <input name="password" type="password" required placeholder="••••••••"
+                               class="w-full bg-[#192540] border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-primary"/>
+                    </div>
+
+                    <button type="submit" id="submitBtn"
+                            class="w-full py-4 rounded-xl bg-[#85adff] text-[#002c66] font-bold text-base shadow-lg hover:brightness-110 active:scale-[0.98] transition-all">
+                        Initialize Profile
+                    </button>
+                </form>
+
+                {% if error == 'exists' %}
+                    <p class="mt-4 text-center text-xs font-bold text-red-400">⚠️ Email already registered. Please Login.</p>
+                {% elif error == 'invalid' %}
+                    <p class="mt-4 text-center text-xs font-bold text-red-400">⚠️ Invalid email or password.</p>
+                {% elif error == 'failed' %}
+                    <p class="mt-4 text-center text-xs font-bold text-red-400">⚠️ Registration failed. Please try again.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Auto-activate login mode if ?mode=login was passed from server
+        const initialMode = "{{ mode }}";
+        if (initialMode === 'login') {
+            toggleMode('login');
+        }
+
+        function setRole(role) {
+            document.getElementById('roleInput').value = role;
+            const btnUser  = document.getElementById('btnUser');
+            const btnAdmin = document.getElementById('btnAdmin');
+            if (role === 'user') {
+                btnUser.className  = 'flex-1 p-4 rounded-xl border-2 border-primary bg-primary/10 transition-all';
+                btnAdmin.className = 'flex-1 p-4 rounded-xl border-2 border-transparent bg-[#091328] hover:border-white/10 transition-all';
+            } else {
+                btnAdmin.className = 'flex-1 p-4 rounded-xl border-2 border-primary bg-primary/10 transition-all';
+                btnUser.className  = 'flex-1 p-4 rounded-xl border-2 border-transparent bg-[#091328] hover:border-white/10 transition-all';
+            }
+        }
+
+        function toggleMode(mode) {
+            const form      = document.getElementById('authForm');
+            const title     = document.getElementById('formTitle');
+            const btn       = document.getElementById('submitBtn');
+            const nameField = document.getElementById('nameField');
+            const modeReg   = document.getElementById('modeReg');
+            const modeLogin = document.getElementById('modeLogin');
+
+            if (mode === 'login') {
+                form.action      = '/login';
+                title.innerText  = 'Welcome Back';
+                btn.innerText    = 'Access Archive';
+                nameField.classList.add('hidden');
+                modeLogin.className = "text-primary border-b-2 border-primary pb-1";
+                modeReg.className   = "text-[#a3aac4] hover:text-white transition-colors";
+            } else {
+                form.action      = '/register';
+                title.innerText  = 'Create Account';
+                btn.innerText    = 'Initialize Profile';
+                nameField.classList.remove('hidden');
+                modeReg.className   = "text-primary border-b-2 border-primary pb-1";
+                modeLogin.className = "text-[#a3aac4] hover:text-white transition-colors";
+            }
+        }
+    </script>
+</body>
+</html>

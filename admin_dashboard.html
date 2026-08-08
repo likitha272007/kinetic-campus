@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Admin Dashboard | Kinetic Campus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card {
+            background: rgba(25, 37, 64, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(133, 173, 255, 0.1);
+        }
+        .stat-card {
+            background: rgba(25, 37, 64, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(133, 173, 255, 0.15);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(133, 173, 255, 0.2); border-radius: 10px; }
+        .progress-fill { transition: width 1s ease-in-out; }
+        tr.expandable-row { cursor: pointer; }
+        tr.expandable-row:hover td { background: rgba(133, 173, 255, 0.04); }
+    </style>
+</head>
+<body class="bg-[#060e20] text-[#dee5ff] min-h-screen">
+
+    <!-- NAV -->
+    <nav class="sticky top-0 z-50 w-full border-b border-white/5 bg-[#060e20]/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-12">
+                <a href="/" class="text-xl font-black tracking-tighter text-[#85adff]">Kinetic Campus</a>
+                <div class="hidden md:flex gap-8 text-sm font-bold uppercase tracking-widest text-[#a3aac4]">
+                    <a href="/explore" class="hover:text-white transition-colors">Explore</a>
+                    <a href="/my-events" class="hover:text-white transition-colors">My Events</a>
+                    <a href="/create-event" class="hover:text-white transition-colors">Create Events</a>
+                    <a href="/admin" class="text-white border-b-2 border-[#85adff] pb-1">Dashboard</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-[10px] font-black uppercase tracking-widest text-[#85adff]">Hi, {{ user_name }}</span>
+                <a href="/logout" class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition-all">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-12">
+
+        <!-- Page Header -->
+        <div class="mb-12">
+            <span class="inline-block px-4 py-1.5 rounded-full bg-[#85adff]/10 text-[#85adff] text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+                ⚡ Admin Control Panel
+            </span>
+            <h1 class="text-4xl font-black tracking-tight mb-2">
+                Campus <span class="text-[#85adff]">Dashboard</span>
+            </h1>
+            <p class="text-[#a3aac4] text-sm font-medium">Live overview of all events and student registrations.</p>
+        </div>
+
+        {% if error_msg %}
+        <div class="mb-8 p-6 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 font-bold">
+            Dashboard Error: {{ error_msg }}
+        </div>
+        {% endif %}
+
+        <!-- STAT CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="stat-card rounded-3xl p-8 flex items-center gap-6 border-l-4 border-[#85adff]">
+                <div class="w-16 h-16 rounded-2xl bg-[#85adff]/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[#85adff] text-3xl">event</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#a3aac4] mb-1">Total Events</p>
+                    <p class="text-4xl font-black text-white">{{ total_events }}</p>
+                </div>
+            </div>
+            <div class="stat-card rounded-3xl p-8 flex items-center gap-6 border-l-4 border-[#fbabff]">
+                <div class="w-16 h-16 rounded-2xl bg-[#fbabff]/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[#fbabff] text-3xl">how_to_reg</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#a3aac4] mb-1">Total RSVPs</p>
+                    <p class="text-4xl font-black text-white">{{ total_registrations }}</p>
+                </div>
+            </div>
+            <div class="stat-card rounded-3xl p-8 flex items-center gap-6 border-l-4 border-green-400">
+                <div class="w-16 h-16 rounded-2xl bg-green-400/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-green-400 text-3xl">group</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#a3aac4] mb-1">Unique Students</p>
+                    <p class="text-4xl font-black text-white">{{ total_students }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- ══════════════════════════════════════════════ -->
+        <!-- AI ANALYTICS PANEL (CPU/GPU powered)          -->
+        <!-- ══════════════════════════════════════════════ -->
+        <div class="mb-12">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🧠</span>
+                    <div>
+                        <h2 class="text-xl font-black text-white">AI Analytics</h2>
+                        <p class="text-[10px] text-[#a3aac4] font-bold uppercase tracking-widest">Powered by NumPy CPU Engine</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="exportAnalyticsCSV()"
+                            class="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all">
+                        <span>📥</span> Export CSV Report
+                    </button>
+                    <div id="aiDeviceBadge"
+                         style="display:inline-flex;align-items:center;gap:8px;padding:6px 16px;
+                                border-radius:20px;font-size:10px;font-weight:900;text-transform:uppercase;
+                                letter-spacing:.1em;background:rgba(133,173,255,0.07);
+                                border:1px solid rgba(133,173,255,0.2);color:#85adff;">
+                        ⏳ Loading device...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hardware Telemetry Bar -->
+            <div id="hwTelemetry" class="mb-6 stat-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">🖥️</span>
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-[#a3aac4]">Hardware Device</p>
+                        <p id="hw-device-name" class="font-bold text-white">Detecting...</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-[#a3aac4]">VRAM / GPU Load</p>
+                        <p id="hw-vram" class="font-bold text-[#4ade80]">Active</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-[#a3aac4]">CPU Cores</p>
+                        <p id="hw-cpu" class="font-bold text-[#85adff]">Detecting...</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-[#a3aac4]">AI Model</p>
+                        <p id="hw-model" class="font-bold text-[#fbabff]">all-MiniLM-L6-v2</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Stat Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card rounded-2xl p-5 text-center">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-[#a3aac4] mb-2">Avg RSVPs/Event</p>
+                    <p id="ai-avg" class="text-3xl font-black text-[#85adff]">—</p>
+                </div>
+                <div class="stat-card rounded-2xl p-5 text-center">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-[#a3aac4] mb-2">Capacity Filled</p>
+                    <p id="ai-fill" class="text-3xl font-black text-[#4ade80]">—</p>
+                </div>
+                <div class="stat-card rounded-2xl p-5 text-center">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-[#a3aac4] mb-2">Peak Month</p>
+                    <p id="ai-peak-month" class="text-xl font-black text-[#fbabff]">—</p>
+                </div>
+                <div class="stat-card rounded-2xl p-5 text-center">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-[#a3aac4] mb-2">Top Trending</p>
+                    <p id="ai-top-trend" class="text-sm font-black text-white leading-tight">—</p>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid md:grid-cols-3 gap-6">
+
+                <!-- Trending Events Bar Chart -->
+                <div class="stat-card rounded-2xl p-6 md:col-span-2">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#85adff] mb-4">🔥 Trending Score by Event (PyTorch Vector Math)</p>
+                    <canvas id="trendingChart" height="160"></canvas>
+                </div>
+
+                <!-- Semester Doughnut -->
+                <div class="stat-card rounded-2xl p-6">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#85adff] mb-4">🎓 Events by Semester</p>
+                    <canvas id="semesterChart" height="160"></canvas>
+                </div>
+
+                <!-- Department Breakdown Chart -->
+                <div class="stat-card rounded-2xl p-6">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#fbabff] mb-4">🏛️ RSVPs by Department</p>
+                    <canvas id="deptChart" height="160"></canvas>
+                </div>
+
+                <!-- Month Bar -->
+                <div class="stat-card rounded-2xl p-6">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#85adff] mb-4">📅 Events by Month</p>
+                    <canvas id="monthChart" height="160"></canvas>
+                </div>
+
+                <!-- Top Locations -->
+                <div class="stat-card rounded-2xl p-6">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#85adff] mb-4">📍 Venue Utilization</p>
+                    <div id="locationsBar" class="space-y-3"></div>
+                </div>
+
+                <!-- AI Capacity & Demand Risk Assessment -->
+                <div class="stat-card rounded-2xl p-6 md:col-span-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-[#4ade80]">🛡️ AI Capacity & Demand Risk Assessment</p>
+                        <span class="text-[9px] font-bold text-[#a3aac4] uppercase">Vector Clustering</span>
+                    </div>
+                    <div id="aiRiskContainer" class="grid md:grid-cols-2 gap-4 text-xs">
+                        <div class="p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+                            <p class="font-bold text-green-400 mb-1">🔥 High Demand Events (Filling Fast)</p>
+                            <div id="highDemandList" class="space-y-1 text-[#a3aac4]">Loading AI analysis...</div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                            <p class="font-bold text-amber-400 mb-1">📢 Promotion Recommended</p>
+                            <div id="lowDemandList" class="space-y-1 text-[#a3aac4]">Loading AI analysis...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- EVENT REGISTRATION TABLE -->
+        <div class="glass-card rounded-[2.5rem] overflow-hidden">
+            <div class="p-8 border-b border-white/5 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-black text-white mb-1">Event Registration Overview</h2>
+                    <p class="text-xs text-[#a3aac4]">Click any event row to expand and see registered students.</p>
+                </div>
+                <span class="material-symbols-outlined text-[#85adff] opacity-50 text-4xl">table_chart</span>
+            </div>
+
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/5 text-[#85adff] text-[10px] uppercase tracking-[0.2em] font-black">
+                            <th class="px-8 py-5"></th>
+                            <th class="px-8 py-5">Event</th>
+                            <th class="px-8 py-5">Date</th>
+                            <th class="px-8 py-5">Location</th>
+                            <th class="px-8 py-5">Capacity</th>
+                            <th class="px-8 py-5">Registered</th>
+                            <th class="px-8 py-5">Fill Rate</th>
+                            <th class="px-8 py-5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventTableBody" class="divide-y divide-white/5">
+                    {% if event_rows %}
+                        {% for ev in event_rows %}
+                        <!-- Event Row (clickable) -->
+                        <tr class="expandable-row transition-colors" onclick="toggleStudents({{ ev.id }})">
+                            <td class="px-8 py-6 text-center">
+                                <span id="arrow-{{ ev.id }}"
+                                      class="material-symbols-outlined text-[#85adff] text-sm transition-transform duration-300">
+                                    chevron_right
+                                </span>
+                            </td>
+                            <td class="px-8 py-6">
+                                <p class="font-extrabold text-white mb-1">{{ ev.title }}</p>
+                                <p class="text-[10px] text-[#a3aac4] uppercase tracking-widest font-bold">Sem {{ ev.semester }}</p>
+                            </td>
+                            <td class="px-8 py-6 text-sm font-bold text-[#dee5ff]">{{ ev.event_date }}</td>
+                            <td class="px-8 py-6">
+                                <span class="text-xs text-[#a3aac4] flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs text-[#fbabff]">location_on</span>
+                                    {{ ev.location }}
+                                </span>
+                            </td>
+                            <td class="px-8 py-6 text-sm font-bold text-[#dee5ff]">
+                                {{ ev.capacity if ev.capacity and ev.capacity > 0 else '—' }}
+                            </td>
+                            <td class="px-8 py-6">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black {{ ev.badge_color }}">
+                                    {{ ev.reg_count }} student{{ 's' if ev.reg_count != 1 else '' }}
+                                </span>
+                            </td>
+                            <td class="px-8 py-6 min-w-[140px]">
+                                {% if ev.capacity and ev.capacity > 0 %}
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                                            <div class="h-full {{ ev.bar_color }} progress-fill rounded-full"
+                                                 style="width: {{ ev.fill_pct }}%"></div>
+                                        </div>
+                                        <span class="text-[10px] font-black text-[#a3aac4] w-8">{{ ev.fill_pct }}%</span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-[10px] text-[#a3aac4] italic">No cap set</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-8 py-6 text-right" onclick="event.stopPropagation()">
+                                <a href="/delete-event/{{ ev.id }}"
+                                   onclick="return confirm('Are you sure you want to delete {{ ev.title | escape }}?')"
+                                   class="px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-widest transition-all">
+                                    🗑️ Delete
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- Expandable Student Sub-Table -->
+                        <tr>
+                            <td colspan="8" class="p-0 border-0">
+                                <div id="students-{{ ev.id }}"
+                                     class="hidden bg-[#060e20]/60 border-t border-white/5">
+                                    <table class="w-full text-left">
+                                        <thead>
+                                            <tr class="text-[#85adff] text-[10px] uppercase tracking-widest font-black">
+                                                <th class="pl-20 pr-6 py-4">#</th>
+                                                <th class="px-6 py-4">Student Name</th>
+                                                <th class="px-6 py-4">Sem</th>
+                                                <th class="px-6 py-4">Dept</th>
+                                                <th class="px-6 py-4">Sec</th>
+                                                <th class="px-6 py-4">Univ ID</th>
+                                                <th class="pr-20 py-4">Registered On</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-white/5">
+                                        {% if ev.students %}
+                                            {% for s in ev.students %}
+                                            <tr class="hover:bg-white/[0.02] transition-colors">
+                                                <td class="pl-20 pr-6 py-4 text-xs text-[#a3aac4] font-bold">{{ loop.index }}</td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 rounded-full bg-[#85adff]/10 flex items-center justify-center text-[#85adff] text-xs font-black">
+                                                            {{ s.student_name[0].upper() if s.student_name else '?' }}
+                                                        </div>
+                                                        <span class="text-sm font-bold text-white">{{ s.student_name or 'Unknown' }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-xs text-[#a3aac4] font-bold whitespace-nowrap">{{ s.semester or '—' }}</td>
+                                                <td class="px-6 py-4 text-xs text-[#a3aac4] font-bold">{{ s.department or '—' }}</td>
+                                                <td class="px-6 py-4 text-xs text-[#a3aac4] font-bold">{{ s.section or '—' }}</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="px-3 py-1 bg-[#85adff]/10 text-[#85adff] text-[10px] font-black rounded-lg whitespace-nowrap">
+                                                        {{ s.university_id }}
+                                                    </span>
+                                                </td>
+                                                <td class="pr-20 py-4 text-xs text-[#a3aac4] whitespace-nowrap">{{ s.registration_date }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="7" class="pl-20 py-8 text-xs text-[#a3aac4] italic">No students registered yet.</td>
+                                            </tr>
+                                        {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="px-8 py-20 text-center">
+                                <span class="material-symbols-outlined text-5xl text-[#85adff]/30 block mb-4">event_busy</span>
+                                <p class="text-[#a3aac4] italic text-sm">No events found. Create one to get started.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- STUDENT FEEDBACK RESULTS SECTION -->
+            <div class="mt-16">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-extrabold tracking-tight flex items-center gap-3">
+                            <span class="p-2 rounded-xl bg-yellow-400/10 text-yellow-400">⭐</span>
+                            Student Feedback &amp; Event Reviews
+                        </h2>
+                        <p class="text-xs text-[#a3aac4] mt-1">Real-time student ratings and reviews submitted after event completion.</p>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                    {% if all_feedback %}
+                        {% for fb in all_feedback %}
+                        <div class="glass-card rounded-3xl p-6 border border-white/5 relative hover:border-yellow-400/30 transition-all">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-3 py-1 rounded-full bg-white/5 text-[10px] font-bold text-[#85adff] uppercase tracking-widest">
+                                    {{ fb.event_title }}
+                                </span>
+                                <div class="text-yellow-400 text-sm font-black">
+                                    {% for i in range(fb.rating) %}★{% endfor %}
+                                    <span class="text-xs text-white/50 ml-1">({{ fb.rating }}/5)</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-white font-medium mb-4 italic">
+                                "{{ fb.comments }}"
+                            </p>
+                            <div class="flex items-center justify-between text-[10px] text-[#a3aac4] pt-4 border-t border-white/5">
+                                <span class="font-bold text-[#dee5ff]">👤 {{ fb.student_name }}</span>
+                                <span>{{ fb.created_at }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="md:col-span-3 glass-card rounded-3xl p-12 text-center text-[#a3aac4]">
+                            <span class="material-symbols-outlined text-4xl block mb-2 text-yellow-400/40">rate_review</span>
+                            <p class="text-sm italic">No student feedback submitted yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function toggleStudents(eventId) {
+            const panel = document.getElementById('students-' + eventId);
+            const arrow = document.getElementById('arrow-' + eventId);
+            const isHidden = panel.classList.contains('hidden');
+
+            document.querySelectorAll('[id^="students-"]').forEach(function(el) {
+                if (el.id !== 'students-' + eventId) el.classList.add('hidden');
+            });
+            document.querySelectorAll('[id^="arrow-"]').forEach(function(el) {
+                if (el.id !== 'arrow-' + eventId) el.style.transform = 'rotate(0deg)';
+            });
+
+            if (isHidden) {
+                panel.classList.remove('hidden');
+                arrow.style.transform = 'rotate(90deg)';
+            } else {
+                panel.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+    // ── AI Analytics Dashboard ────────────────────────────────
+    const CHART_DEFAULTS = {
+        color: '#a3aac4',
+        plugins: { legend: { labels: { color: '#a3aac4', font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 } } } },
+    };
+
+    async function loadAIAnalytics() {
+        // Device status badge & hardware telemetry
+        fetch('/api/device-status')
+            .then(r => r.json())
+            .then(d => {
+                const badge = document.getElementById('aiDeviceBadge');
+                if (d.cuda) {
+                    badge.textContent = '🟢 NVIDIA GPU — ' + (d.gpu_name || 'RTX 3050');
+                    badge.style.color = '#4ade80';
+                    badge.style.borderColor = 'rgba(74,222,128,0.3)';
+                    document.getElementById('hw-device-name').textContent = d.gpu_name || 'NVIDIA GPU';
+                    document.getElementById('hw-vram').textContent = (d.gpu_vram_gb || '4') + ' GB VRAM (Active)';
+                } else if (d.torch) {
+                    badge.textContent = '🔵 CPU AI — ' + (d.model_name || 'NumPy');
+                    badge.style.color = '#85adff';
+                    document.getElementById('hw-device-name').textContent = 'CPU (PyTorch Vector Mode)';
+                    document.getElementById('hw-vram').textContent = 'CPU Threaded';
+                } else {
+                    badge.textContent = '⚪ Keyword Mode';
+                    document.getElementById('hw-device-name').textContent = 'Pure Python';
+                    document.getElementById('hw-vram').textContent = 'N/A';
+                }
+                document.getElementById('hw-cpu').textContent = (d.cpu_cores || '4') + ' Cores (' + (d.cpu_percent || 0) + '% Load)';
+                document.getElementById('hw-model').textContent = d.model_name || 'all-MiniLM-L6-v2';
+            }).catch(() => {});
+
+        // Main analytics
+        const res  = await fetch('/api/cpu/analytics');
+        const json = await res.json();
+        if (!json.ok) return;
+        const d = json.data;
+
+        // ── Stat cards ──────────────────────────────────────
+        document.getElementById('ai-avg').textContent  = d.avg_registered;
+        document.getElementById('ai-fill').textContent = d.capacity_fill_pct + '%';
+
+        const months = Object.entries(d.month_distribution || {});
+        if (months.length) {
+            const peak = months.sort((a,b) => b[1]-a[1])[0];
+            document.getElementById('ai-peak-month').textContent = peak[0];
+        }
+
+        const trend = d.trending_events || [];
+        if (trend.length) {
+            document.getElementById('ai-top-trend').textContent = trend[0].title;
+        }
+
+        // ── Chart: Trending Events ──────────────────────────
+        if (trend.length) {
+            new Chart(document.getElementById('trendingChart'), {
+                type: 'bar',
+                data: {
+                    labels: trend.map(e => e.title.length > 20 ? e.title.slice(0,18)+'…' : e.title),
+                    datasets: [{
+                        label: 'Trending Score',
+                        data: trend.map(e => e.score),
+                        backgroundColor: trend.map((_, i) =>
+                            i === 0 ? 'rgba(133,173,255,0.85)' : 'rgba(133,173,255,0.25)'
+                        ),
+                        borderColor: 'rgba(133,173,255,0.5)',
+                        borderWidth: 1,
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    ...CHART_DEFAULTS,
+                    responsive: true,
+                    scales: {
+                        x: { ticks: { color: '#a3aac4', font: { size: 10, weight: '700' } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                        y: { ticks: { color: '#a3aac4' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // ── Chart: Semester Doughnut ────────────────────────
+        const sems = d.semester_distribution || {};
+        if (Object.keys(sems).length) {
+            const COLORS = ['#85adff','#fbabff','#4ade80','#fbbf24','#f87171','#a78bfa'];
+            new Chart(document.getElementById('semesterChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(sems).map(k => 'Sem ' + k),
+                    datasets: [{
+                        data: Object.values(sems),
+                        backgroundColor: COLORS,
+                        borderColor: '#060e20',
+                        borderWidth: 3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '65%',
+                    plugins: { legend: { position: 'bottom', labels: { color: '#a3aac4', font: { size: 10, weight: '700' }, padding: 10 } } }
+                }
+            });
+        }
+
+        // ── Chart: Department Breakdown Doughnut ───────────
+        const depts = d.department_distribution || {};
+        const deptKeys = Object.keys(depts);
+        if (deptKeys.length) {
+            const DEPT_COLORS = ['#4ade80','#85adff','#fbabff','#fbbf24','#a78bfa','#f87171'];
+            new Chart(document.getElementById('deptChart'), {
+                type: 'polarArea',
+                data: {
+                    labels: deptKeys,
+                    datasets: [{
+                        data: Object.values(depts),
+                        backgroundColor: DEPT_COLORS.map(c => c + '88'),
+                        borderColor: DEPT_COLORS,
+                        borderWidth: 1,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } } },
+                    plugins: { legend: { position: 'bottom', labels: { color: '#a3aac4', font: { size: 9, weight: '700' } } } }
+                }
+            });
+        } else {
+            document.getElementById('deptChart').parentElement.innerHTML += '<p class="text-xs text-[#a3aac4] italic text-center py-8">RSVPs will populate department breakdown.</p>';
+        }
+
+        // ── Chart: Month Bar ────────────────────────────────
+        const monthData = d.month_distribution || {};
+        if (Object.keys(monthData).length) {
+            const MONTH_SHORT = {
+                '01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun',
+                '07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'
+            };
+            const labels = Object.keys(monthData).map(k => {
+                const parts = k.split('-');
+                return (MONTH_SHORT[parts[1]] || parts[1]) + ' ' + parts[0];
+            });
+            new Chart(document.getElementById('monthChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Events',
+                        data: Object.values(monthData),
+                        backgroundColor: 'rgba(251,171,255,0.6)',
+                        borderColor: 'rgba(251,171,255,0.9)',
+                        borderWidth: 1,
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { ticks: { color: '#a3aac4', font: { size: 10 } }, grid: { display: false } },
+                        y: { ticks: { color: '#a3aac4', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // ── Venue Progress Bars ─────────────────────────────
+        const locs = d.top_locations || [];
+        const maxLoc = locs.length ? Math.max(...locs.map(l => l.count)) : 1;
+        const locContainer = document.getElementById('locationsBar');
+        locContainer.innerHTML = locs.map((l, i) => {
+            const pct = Math.round((l.count / maxLoc) * 100);
+            const colors = ['#85adff','#fbabff','#4ade80','#fbbf24','#f87171'];
+            const col    = colors[i % colors.length];
+            return `<div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                    <span style="font-size:12px;font-weight:700;color:#dee5ff">${l.location}</span>
+                    <span style="font-size:11px;font-weight:900;color:${col}">${l.count} event${l.count>1?'s':''}</span>
+                </div>
+                <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden">
+                    <div class="progress-fill" style="height:100%;width:0%;background:${col};border-radius:6px"
+                         data-width="${pct}%"></div>
+                </div>
+            </div>`;
+        }).join('');
+
+        setTimeout(() => {
+            document.querySelectorAll('.progress-fill[data-width]').forEach(el => {
+                el.style.width = el.dataset.width;
+            });
+        }, 200);
+
+        // ── AI Demand Risk Assessment Lists ─────────────────
+        const demand = d.demand_breakdown || {};
+        const highList = demand.high_demand_events || [];
+        const lowList  = demand.low_demand_events || [];
+
+        document.getElementById('highDemandList').innerHTML = highList.length
+            ? highList.map(e => `<div>• <strong>${e.title}</strong> — ${e.registered}/${e.capacity} (${e.fill_pct}% full)</div>`).join('')
+            : '<div>No high-capacity risk events currently.</div>';
+
+        document.getElementById('lowDemandList').innerHTML = lowList.length
+            ? lowList.map(e => `<div>• <strong>${e.title}</strong> — ${e.registered} RSVPs (Needs marketing push)</div>`).join('')
+            : '<div>All events have active RSVPs!</div>';
+    }
+
+    // CSV Exporter
+    function exportAnalyticsCSV() {
+        fetch('/api/cpu/analytics')
+            .then(r => r.json())
+            .then(json => {
+                const d = json.data || {};
+                let csv = 'Metric,Value\n';
+                csv += `Total Events,${d.total_events || 0}\n`;
+                csv += `Total RSVPs,${d.total_registered || 0}\n`;
+                csv += `Avg RSVPs per Event,${d.avg_registered || 0}\n`;
+                csv += `Capacity Fill Rate,${d.capacity_fill_pct || 0}%\n\n`;
+
+                csv += 'Event Title,Trending Score\n';
+                (d.trending_events || []).forEach(e => {
+                    csv += `"${e.title.replace(/"/g, '""')}",${e.score}\n`;
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `Kinetic_Campus_Analytics_${new Date().toISOString().slice(0,10)}.csv`;
+                a.click();
+            });
+    }
+
+    loadAIAnalytics();
+    </script>
+    <script src="/static/ai_features.js"></script>
+</body>
+</html>

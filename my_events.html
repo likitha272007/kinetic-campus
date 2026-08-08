@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>My Events | Kinetic Campus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card {
+            background: rgba(25, 37, 64, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(133, 173, 255, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(133, 173, 255, 0.2); border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-[#060e20] text-[#dee5ff] min-h-screen">
+
+    <!-- NAV -->
+    <nav class="sticky top-0 z-50 w-full border-b border-white/5 bg-[#060e20]/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-12">
+                <a href="/" class="text-xl font-black tracking-tighter text-[#85adff]">Kinetic Campus</a>
+                <div class="hidden md:flex gap-8 text-sm font-bold uppercase tracking-widest text-[#a3aac4]">
+                    <a href="/explore" class="hover:text-white transition-colors">Explore</a>
+                    <a href="/my-events" class="text-white border-b-2 border-[#85adff] pb-1">My Events</a>
+                    {% if role == 'admin' %}
+                        <a href="/create-event" class="hover:text-white transition-colors">Create Events</a>
+                        <a href="/admin" class="hover:text-white transition-colors">Dashboard</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div class="relative inline-block">
+                    <button id="notificationBtn"
+                            class="material-symbols-outlined text-[#a3aac4] relative hover:text-white transition-colors focus:outline-none">
+                        notifications
+                        <span id="notificationCount"
+                              class="hidden absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-black rounded-full border-2 border-[#060e20]">0</span>
+                    </button>
+                    <div id="notifDropdown"
+                         class="hidden absolute right-0 mt-4 w-80 glass-card rounded-2xl shadow-2xl z-[100] overflow-hidden border border-white/10">
+                        <div class="p-4 border-b border-white/5 bg-white/5">
+                            <h4 class="text-xs font-black uppercase tracking-widest text-[#85adff]">Recent Pulses</h4>
+                        </div>
+                        <div id="notifList" class="max-h-96 overflow-y-auto custom-scrollbar">
+                            <div class="p-8 text-center text-[#a3aac4] text-xs italic">Checking for updates...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-[#85adff]">Hi, {{ user_name }}</span>
+                    <a href="/logout" class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition-all">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <div class="mb-12">
+            <h1 class="text-4xl font-black tracking-tight mb-2">
+                My <span class="text-[#85adff]">Registered Events</span>
+            </h1>
+            <p class="text-[#a3aac4] text-sm font-medium">Events you have RSVP'd to, {{ user_name }}.</p>
+        </div>
+
+        <!-- Flash messages -->
+        {% if flash == 'deregistered' %}
+            <div class="mb-8 px-6 py-4 rounded-2xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm font-bold flex items-center gap-3">
+                <span class="material-symbols-outlined">check_circle</span>
+                Successfully deregistered from the event.
+            </div>
+        {% elif flash == 'error' %}
+            <div class="mb-8 px-6 py-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-bold flex items-center gap-3">
+                <span class="material-symbols-outlined">error</span>
+                Something went wrong. Please try again.
+            </div>
+        {% endif %}
+
+        {% if error_msg %}
+            <div class="mb-8 px-6 py-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold">
+                Error: {{ error_msg }}
+            </div>
+        {% endif %}
+
+        <!-- Table -->
+        <div class="glass-card rounded-[2.5rem] overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-white/5 text-[#85adff] text-[10px] uppercase tracking-[0.2em] font-black">
+                        <th class="px-8 py-6">Event Details</th>
+                        <th class="px-8 py-6">Date &amp; Location</th>
+                        <th class="px-8 py-6">Registration Info</th>
+                        <th class="px-8 py-6 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                {% if registrations %}
+                    {% for reg in registrations %}
+                    <tr class="hover:bg-white/[0.02] transition-colors">
+                        <!-- Event Details -->
+                        <td class="px-8 py-8">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-[#85adff]/10 flex items-center justify-center text-[#85adff]">
+                                    <span class="material-symbols-outlined">event</span>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-white mb-1">{{ reg.title }}</p>
+                                    <p class="text-[10px] text-[#a3aac4] uppercase font-bold tracking-widest">Sem {{ reg.semester }}</p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Date & Location -->
+                        <td class="px-8 py-8">
+                            <p class="text-sm font-bold text-[#dee5ff]">{{ reg.event_date }}</p>
+                            <p class="text-xs text-[#a3aac4] flex items-center gap-1 mt-1">
+                                <span class="material-symbols-outlined text-xs">location_on</span>
+                                {{ reg.location }}
+                            </p>
+                        </td>
+
+                        <!-- Registration Info -->
+                        <td class="px-8 py-8">
+                            <p class="text-xs font-bold text-[#dee5ff]">
+                                <span class="text-[#a3aac4]">Dept:</span> {{ reg.section }}
+                            </p>
+                            <p class="text-xs font-bold text-[#dee5ff] mt-1">
+                                <span class="text-[#a3aac4]">ID:</span> {{ reg.university_id }}
+                            </p>
+                            <p class="text-[10px] text-[#a3aac4] mt-1">
+                                Registered: {{ reg.registration_date }}
+                            </p>
+                        </td>
+
+                        <!-- Actions & Feedback -->
+                        <td class="px-8 py-8 text-right">
+                            <div class="flex justify-end items-center gap-3">
+                                <button onclick="openFeedbackModal({{ reg.event_id }}, '{{ reg.title | escape }}')"
+                                        class="px-4 py-2 rounded-xl bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20 text-xs font-black uppercase tracking-widest flex items-center gap-1.5 transition-all">
+                                    <span class="material-symbols-outlined text-sm">star</span>
+                                    Feedback
+                                </button>
+                                <a href="/event-details?id={{ reg.event_id }}"
+                                   class="p-3 rounded-xl bg-white/5 border border-white/10 text-[#85adff] hover:bg-white/10 transition-all"
+                                   title="View Event">
+                                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                </a>
+                                <form action="/deregister" method="POST"
+                                      onsubmit="return confirm('Are you sure you want to deregister from this event?')">
+                                    <input type="hidden" name="regId" value="{{ reg.reg_id }}">
+                                    <button type="submit"
+                                            class="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all"
+                                            title="Deregister">
+                                        <span class="material-symbols-outlined text-sm">person_remove</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="px-8 py-20 text-center">
+                            <span class="material-symbols-outlined text-5xl text-[#85adff]/30 block mb-4">event_busy</span>
+                            <p class="text-[#a3aac4] italic text-sm mb-4">You haven't registered for any events yet.</p>
+                            <a href="/explore"
+                               class="px-6 py-3 rounded-xl bg-[#85adff] text-[#002c66] font-black text-xs uppercase tracking-widest">
+                                Browse Events
+                            </a>
+                        </td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- STUDENT FEEDBACK MODAL -->
+    <div id="feedbackModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center px-4"
+         style="background:rgba(0,0,0,.75); backdrop-filter:blur(8px);">
+        <div class="glass-card rounded-3xl p-8 max-w-md w-full border border-yellow-400/30 shadow-2xl relative">
+            <button onclick="closeFeedbackModal()" class="absolute top-4 right-4 text-white hover:text-yellow-400 text-2xl font-bold">✕</button>
+            <div class="text-center mb-6">
+                <span class="inline-block p-3 rounded-2xl bg-yellow-400/10 text-yellow-400 mb-3">
+                    <span class="material-symbols-outlined text-3xl">rate_review</span>
+                </span>
+                <h3 class="text-xl font-black text-white" id="feedbackEventTitle">Event Feedback</h3>
+                <p class="text-xs text-[#a3aac4] mt-1">Rate your experience and share your thoughts with organizers.</p>
+            </div>
+
+            <form id="feedbackForm" onsubmit="submitStudentFeedback(event)">
+                <input type="hidden" id="feedbackEventId" name="event_id"/>
+                
+                <!-- Star Rating selector -->
+                <div class="mb-6 text-center">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-[#a3aac4] mb-3">Overall Rating</label>
+                    <div class="flex justify-center gap-3 text-3xl text-yellow-400" id="starContainer">
+                        <span onclick="setRating(1)" class="star-icon cursor-pointer opacity-40 hover:opacity-100 transition-all" data-star="1">★</span>
+                        <span onclick="setRating(2)" class="star-icon cursor-pointer opacity-40 hover:opacity-100 transition-all" data-star="2">★</span>
+                        <span onclick="setRating(3)" class="star-icon cursor-pointer opacity-40 hover:opacity-100 transition-all" data-star="3">★</span>
+                        <span onclick="setRating(4)" class="star-icon cursor-pointer opacity-40 hover:opacity-100 transition-all" data-star="4">★</span>
+                        <span onclick="setRating(5)" class="star-icon cursor-pointer opacity-40 hover:opacity-100 transition-all" data-star="5">★</span>
+                    </div>
+                    <input type="hidden" id="selectedRating" name="rating" value="5"/>
+                </div>
+
+                <!-- Comments -->
+                <div class="mb-6">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-[#a3aac4] mb-2">Student Comments & Review</label>
+                    <textarea id="feedbackComments" name="comments" rows="3" required placeholder="What did you enjoy most about this event?"
+                              class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-400 transition-all"></textarea>
+                </div>
+
+                <button type="submit"
+                        class="w-full py-4 rounded-xl bg-yellow-400 text-[#060e20] font-black text-xs uppercase tracking-widest hover:scale-[1.02] transition-all">
+                    Submit Feedback
+                </button>
+            </form>
+            <div id="feedbackStatus" class="hidden mt-4 text-center text-xs font-bold text-green-400"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentRating = 5;
+
+        function setRating(r) {
+            currentRating = r;
+            document.getElementById('selectedRating').value = r;
+            const stars = document.querySelectorAll('.star-icon');
+            stars.forEach((s, idx) => {
+                if (idx < r) {
+                    s.classList.remove('opacity-40');
+                } else {
+                    s.classList.add('opacity-40');
+                }
+            });
+        }
+
+        function openFeedbackModal(eventId, title) {
+            document.getElementById('feedbackEventId').value = eventId;
+            document.getElementById('feedbackEventTitle').innerText = 'Feedback: ' + title;
+            document.getElementById('feedbackModal').classList.remove('hidden');
+            setRating(5);
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.add('hidden');
+        }
+
+        function submitStudentFeedback(e) {
+            e.preventDefault();
+            const eventId = document.getElementById('feedbackEventId').value;
+            const rating  = document.getElementById('selectedRating').value;
+            const comments = document.getElementById('feedbackComments').value;
+
+            fetch('/api/submit-feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ event_id: eventId, rating: rating, comments: comments })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    const status = document.getElementById('feedbackStatus');
+                    status.innerText = '✅ ' + data.message;
+                    status.classList.remove('hidden');
+                    setTimeout(() => {
+                        closeFeedbackModal();
+                        status.classList.add('hidden');
+                        document.getElementById('feedbackComments').value = '';
+                    }, 1500);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(err => alert('Feedback submission error: ' + err));
+        }
+    </script>
+
+    <script>
+        document.getElementById('notificationBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('notifDropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                document.getElementById('notificationCount').classList.add('hidden');
+                loadNotificationHistory();
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notifDropdown');
+            const btn      = document.getElementById('notificationBtn');
+            if (!btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.add('hidden');
+        });
+
+        function checkNotifications() {
+            fetch('/check-notifications?t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    const badge = document.getElementById('notificationCount');
+                    if (data.new_event && data.count > 0) {
+                        badge.innerText = data.count;
+                        badge.classList.remove('hidden');
+                    }
+                }).catch(() => console.warn('Pulse check offline'));
+        }
+
+        function loadNotificationHistory() {
+            const list = document.getElementById('notifList');
+            list.innerHTML = '<div class="p-8 text-center text-[#a3aac4] text-xs italic">Loading pulses...</div>';
+            fetch('/get-previous-events?t=' + Date.now())
+                .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+                .then(events => {
+                    if (!events || events.length === 0) {
+                        list.innerHTML = '<div class="p-6 text-center text-xs text-[#a3aac4]">No pulses found.</div>';
+                        return;
+                    }
+                    list.innerHTML = events.map(function(e) {
+                        const id    = parseInt(e.id, 10);
+                        const title = e.title || 'Untitled Event';
+                        const date  = e.date  || 'Date TBA';
+                        if (!id || id <= 0) return '';
+                        return '<div class="p-4 border-b border-white/5 hover:bg-white/5 transition-colors">'
+                            + '<p class="text-[10px] font-bold text-[#85adff] uppercase mb-1">' + date + '</p>'
+                            + '<h5 class="text-sm font-extrabold mb-3 text-white">' + title + '</h5>'
+                            + '<button onclick="window.location.href=\'/event-details?id=' + id + '\'"'
+                            + ' class="inline-block px-4 py-2 bg-[#85adff] text-[#002c66] text-[10px] font-black uppercase rounded-lg hover:opacity-90 cursor-pointer">'
+                            + 'Join Now</button></div>';
+                    }).join('');
+                })
+                .catch(() => { list.innerHTML = '<div class="p-6 text-center text-xs text-red-400">Failed to load pulses.</div>'; });
+        }
+
+        setInterval(checkNotifications, 3000);
+    </script>
+    <script src="/static/ai_features.js"></script>
+</body>
+</html>

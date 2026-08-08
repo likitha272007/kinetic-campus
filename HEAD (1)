@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 58dd50efc72105977833a23f8deb70c56b72d686 Kiran <antannavarkiran@gmail.com> 1786118667 +0530	commit (initial): Initial commit of Kinetic Campus Flask app with GPU AI & Leaflet Maps
+58dd50efc72105977833a23f8deb70c56b72d686 0000000000000000000000000000000000000000 Kiran <antannavarkiran@gmail.com> 1786118687 +0530	Branch: renamed refs/heads/master to refs/heads/main
+0000000000000000000000000000000000000000 58dd50efc72105977833a23f8deb70c56b72d686 Kiran <antannavarkiran@gmail.com> 1786118687 +0530	Branch: renamed refs/heads/master to refs/heads/main
+58dd50efc72105977833a23f8deb70c56b72d686 a40b6e83afec65c5d3c1d16b79d9b230045e871d Kiran <antannavarkiran@gmail.com> 1786118801 +0530	commit: Added Kinetic Campus Flask App with GPU AI and Leaflet maps
+a40b6e83afec65c5d3c1d16b79d9b230045e871d 8df22734db32658fc5d42566f4c10b1289747bd3 Kiran <antannavarkiran@gmail.com> 1786118863 +0530	commit: Update README to be 100% Python Flask focused
+8df22734db32658fc5d42566f4c10b1289747bd3 77c6292ed45942148fdbe58628199093627287cf Kiran <antannavarkiran@gmail.com> 1786156090 +0530	commit: Made all feature cards interactive and runnable
+77c6292ed45942148fdbe58628199093627287cf ed3e663eaf2e5ce29704364fd2f2093c8d345169 Kiran <antannavarkiran@gmail.com> 1786156259 +0530	commit: Added live QR Code camera scanner and event pass generator
+ed3e663eaf2e5ce29704364fd2f2093c8d345169 9747f319dae30d37cd20e79d406d147e5e2d6c8d Kiran <antannavarkiran@gmail.com> 1786156457 +0530	commit: Added student event feedback portal and admin feedback analytics dashboard
+9747f319dae30d37cd20e79d406d147e5e2d6c8d 9bfa943edfa3913c6f22dbd6218b0af34ea045a3 Kiran <antannavarkiran@gmail.com> 1786156572 +0530	commit: Fixed feedback button modal execution and added feedback form to event details page

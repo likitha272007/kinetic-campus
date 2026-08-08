@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Event Details | Kinetic Campus</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+    <!-- Leaflet.js Maps CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #060e20; color: #dee5ff; }
+        .glass-panel { background: rgba(25, 37, 64, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(133, 173, 255, 0.1); }
+        input, select { background-color: #192540 !important; border: 1px solid rgba(255,255,255,0.05) !important; color: white !important; }
+        select option { background-color: #192540; color: white; }
+        .leaflet-container { font-family: 'Plus Jakarta Sans', sans-serif; background: #0b172a !important; }
+    </style>
+</head>
+<body class="p-6">
+    <main class="max-w-5xl mx-auto py-12">
+        <a href="/explore" class="inline-flex items-center text-[#a3aac4] hover:text-[#85adff] mb-8 transition-colors">
+            <span class="material-symbols-outlined mr-2">arrow_back</span> Back to Archive
+        </a>
+
+        {% if error == 'invalid_id' %}
+            <div class="glass-panel rounded-3xl p-12 text-center">
+                <h2 class="text-2xl font-black mb-2 text-red-400">Invalid Event ID</h2>
+                <a href="/explore" class="px-8 py-3 rounded-xl bg-[#85adff] text-[#002c66] font-black text-sm">Go Back</a>
+            </div>
+        {% elif error %}
+            <p class="text-red-400 p-8">Error loading event: {{ error }}</p>
+        {% elif event %}
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="md:col-span-2 space-y-8">
+                    <section class="glass-panel rounded-3xl p-10">
+
+                        {% if event.banner_image %}
+                        <div class="w-full h-72 rounded-2xl overflow-hidden mb-8 border border-white/10 shadow-lg">
+                            <img src="/uploads/{{ event.banner_image }}" class="w-full h-full object-cover" alt="Event Banner">
+                        </div>
+                        {% endif %}
+
+                        <span class="text-[10px] font-black uppercase tracking-[0.3em] text-[#85adff] bg-[#85adff]/10 px-3 py-1 rounded-full">
+                            {{ event.semester }} Semester
+                        </span>
+
+                        <h1 class="text-4xl font-black tracking-tight mt-4 mb-6">{{ event.title }}</h1>
+
+                        <div class="flex flex-wrap gap-6 mb-8 text-sm font-bold text-[#a3aac4] bg-white/5 p-4 rounded-2xl border border-white/5">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[#fbabff]">calendar_month</span>
+                                {{ event.event_date }}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[#fbabff]">location_on</span>
+                                {{ event.location }}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[#fbabff]">group</span>
+                                Capacity: {{ event.capacity if event.capacity else 'Unlimited' }}
+                            </div>
+                        </div>
+
+                        <div class="space-y-8">
+                            <div>
+                                <h4 class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#85adff] mb-3">
+                                    <span class="material-symbols-outlined text-sm">description</span> Event Description
+                                </h4>
+                                <p class="text-lg leading-relaxed text-[#a3aac4]">{{ event.purpose }}</p>
+                            </div>
+                            <div>
+                                <h4 class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#fbabff] mb-3">
+                                    <span class="material-symbols-outlined text-sm">lightbulb</span> Expected Outcome
+                                </h4>
+                                <p class="text-lg leading-relaxed text-[#a3aac4]">
+                                    {{ event.outcome if event.outcome else 'No specific outcome provided.' }}
+                                </p>
+                            </div>
+
+                            <!-- VENUE MAP -->
+                            <div class="pt-4 border-t border-white/10">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#4ade80]">
+                                        <span class="material-symbols-outlined text-sm">map</span> Venue Map & Directions
+                                    </h4>
+                                    <a href="https://maps.google.com/?q={{ (event.location ~ ', Presidency University, Rajanakunte, Bengaluru, Karnataka') | urlencode }}" target="_blank"
+                                       class="text-[10px] font-bold text-[#85adff] hover:underline flex items-center gap-1">
+                                        Google Maps ↗
+                                    </a>
+                                </div>
+                                <div id="venueMap" class="w-full h-64 rounded-2xl overflow-hidden border border-white/10 shadow-inner"></div>
+                                <p class="text-xs text-[#a3aac4] mt-3 font-semibold flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-sm text-[#4ade80]">pin_drop</span>
+                                    <span>Exact Venue: <strong class="text-white">{{ event.location }}</strong></span>
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="md:col-span-1">
+                    <section class="glass-panel rounded-3xl p-8 sticky top-12 border-t-4 border-[#85adff]">
+                        <h3 class="text-xl font-bold mb-6">Initialize RSVP</h3>
+
+                        <form action="/register-event" method="POST" class="space-y-4">
+                            <input type="hidden" name="eventId" value="{{ event_id }}">
+
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-[#a3aac4] mb-2">Student Name</label>
+                                <input name="studentName" type="text"
+                                       value="{{ user_name or '' }}"
+                                       required
+                                       class="w-full rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#85adff] transition-all"/>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-[#a3aac4] mb-2">Semester</label>
+                                <select name="semester" class="w-full rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#85adff] transition-all appearance-none">
+                                    <option value="1">1st Semester</option>
+                                    <option value="2">2nd Semester</option>
+                                    <option value="3">3rd Semester</option>
+                                    <option value="4">4th Semester</option>
+                                    <option value="5">5th Semester</option>
+                                    <option value="6">6th Semester</option>
+                                    <option value="7">7th Semester</option>
+                                    <option value="8">8th Semester</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-[#a3aac4] mb-2">Department</label>
+                                <input name="department" type="text" placeholder="e.g. Computer Science" required
+                                       class="w-full rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#85adff] transition-all"/>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-[#a3aac4] mb-2">Section</label>
+                                <input name="section" type="text" placeholder="e.g. A" required
+                                       class="w-full rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#85adff] transition-all"/>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-[#a3aac4] mb-2">University Roll No.</label>
+                                <input name="universityId" type="text" placeholder="e.g. 2026-CS-001" required
+                                       class="w-full rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#85adff] transition-all"/>
+                            </div>
+
+                            <button type="submit"
+                                    class="w-full py-4 mt-4 rounded-xl bg-[#85adff] text-[#002c66] font-black text-sm shadow-lg hover:scale-[1.02] transition-all">
+                                Confirm Registration
+                            </button>
+                        </form>
+                    </section>
+
+                    <!-- QUICK JOIN QR CODE CARD -->
+                    <section class="glass-panel rounded-3xl p-6 mt-6 text-center border-t-4 border-[#fbabff]">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-[#fbabff] mb-2">📱 Scan to Quick RSVP</p>
+                        <div class="p-3 bg-white rounded-2xl inline-block shadow-lg mb-3">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http%3A%2F%2Flocalhost%3A5000%2Fevent-details%3Fid%3D{{ event_id }}"
+                                 alt="Event QR Code" class="w-32 h-32 rounded-lg"/>
+                        </div>
+                        <p class="text-[10px] text-[#a3aac4]">Scan with laptop camera or phone to join instantly!</p>
+                    </section>
+
+                    <!-- EVENT FEEDBACK CARD -->
+                    <section class="glass-panel rounded-3xl p-6 mt-6 border-t-4 border-yellow-400">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="material-symbols-outlined text-yellow-400">rate_review</span>
+                            <h4 class="text-sm font-black text-white">Event Feedback</h4>
+                        </div>
+                        <form onsubmit="submitDetailsFeedback(event)">
+                            <div class="flex gap-2 text-2xl text-yellow-400 mb-3 justify-center">
+                                <span onclick="setDetRating(1)" class="det-star cursor-pointer opacity-40 hover:opacity-100">★</span>
+                                <span onclick="setDetRating(2)" class="det-star cursor-pointer opacity-40 hover:opacity-100">★</span>
+                                <span onclick="setDetRating(3)" class="det-star cursor-pointer opacity-40 hover:opacity-100">★</span>
+                                <span onclick="setDetRating(4)" class="det-star cursor-pointer opacity-40 hover:opacity-100">★</span>
+                                <span onclick="setDetRating(5)" class="det-star cursor-pointer opacity-100">★</span>
+                            </div>
+                            <input type="hidden" id="detRating" value="5"/>
+                            <textarea id="detComments" rows="2" required placeholder="Share your experience..."
+                                      class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-xs text-white focus:outline-none mb-3"></textarea>
+                            <button type="submit"
+                                    class="w-full py-2.5 rounded-xl bg-yellow-400 text-[#060e20] font-black text-xs uppercase tracking-widest hover:scale-[1.02] transition-all">
+                                Submit Review
+                            </button>
+                        </form>
+                        <div id="detStatus" class="hidden mt-2 text-center text-xs font-bold text-green-400"></div>
+                    </section>
+                </div>
+            </div>
+        {% else %}
+            <div class="glass-panel rounded-3xl p-12 text-center">
+                <span class="material-symbols-outlined text-5xl text-[#85adff] mb-4 block">search_off</span>
+                <h2 class="text-2xl font-black mb-2">Event Not Found</h2>
+                <p class="text-[#a3aac4] mb-6">This event may have been removed or the link is invalid.</p>
+                <a href="/explore" class="px-8 py-3 rounded-xl bg-[#85adff] text-[#002c66] font-black text-sm">Browse All Events</a>
+            </div>
+        {% endif %}
+    </main>
+
+    {% if event %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const locName = {{ event.location | tojson }};
+            const eventTitle = {{ event.title | tojson }};
+
+            // Presidency University Bengaluru Campus Locations
+            const PRESIDENCY_UNIV_CENTER = [13.1682, 77.5352]; // Presidency University, Yelahanka, Bengaluru
+
+            const CAMPUS_LOCATIONS = {
+                'main auditorium':   [13.1682, 77.5352],
+                'open air theatre':  [13.1688, 77.5358],
+                'cs lab block b':    [13.1678, 77.5348],
+                'conference hall':   [13.1684, 77.5350],
+                'science block':     [13.1690, 77.5362],
+                'sports ground':     [13.1672, 77.5360]
+            };
+
+            const key = (locName || '').toLowerCase().trim();
+            let coords = CAMPUS_LOCATIONS[key] || PRESIDENCY_UNIV_CENTER;
+
+            const map = L.map('venueMap', {
+                center: coords,
+                zoom: 17,
+                zoomControl: true
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                maxZoom: 19
+            }).addTo(map);
+
+            const popupContent = `
+                <div style="color:#060e20; font-family:'Plus Jakarta Sans',sans-serif; padding:4px">
+                    <strong style="font-size:13px; color:#002c66">${eventTitle}</strong><br/>
+                    <span style="font-size:11px; font-weight:700; color:#555">📍 ${locName}</span>
+                </div>
+            `;
+
+            L.marker(coords).addTo(map)
+                .bindPopup(popupContent)
+                .openPopup();
+        });
+
+        let currentDetRating = 5;
+
+        function setDetRating(r) {
+            currentDetRating = r;
+            document.getElementById('detRating').value = r;
+            const stars = document.querySelectorAll('.det-star');
+            stars.forEach((s, idx) => {
+                if (idx < r) s.classList.remove('opacity-40');
+                else s.classList.add('opacity-40');
+            });
+        }
+
+        function submitDetailsFeedback(e) {
+            e.preventDefault();
+            const eventId = "{{ event_id }}";
+            const rating  = document.getElementById('detRating').value;
+            const comments = document.getElementById('detComments').value;
+
+            fetch('/api/submit-feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ event_id: eventId, rating: rating, comments: comments })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    const status = document.getElementById('detStatus');
+                    status.innerText = '✅ Thank you! Your review is posted to Admin Dashboard.';
+                    status.classList.remove('hidden');
+                    document.getElementById('detComments').value = '';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(err => alert('Submission error: ' + err));
+        }
+    </script>
+    {% endif %}
+</body>
+</html>
